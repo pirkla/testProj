@@ -7,50 +7,63 @@
 //
 
 import Foundation
+import Combine
 
-// it's possible that if a token is renewed after a set of requests have been built that those requests will use the older invalid token. To avoid a race condition we would need a way to either reference the actual token that is getting changed when building the request, or check that it's valid.
-// I don't think that could be built into a request though. Maybe we should just limit how many are queued up, then renew the token if it has less than a reasonable period of time to run. It's introducing a potential race condition which I don't like, but I'm not sure how to deal with it. For now the implementation is reasonable, but I'll think on it.
-// I'm not sure if renewing a token will invalidate the older requests too. This requires some testing, but the rest of this class is solid.
 
-// I think I should write a run call method that lets you inject authorization right before it runs. That seems like the only way to guarantee the issue doesn't present itself. Of course it's possible the renew token method runs at the same time and completes first, but who has time for that.
-
+// the functions in this class mutate variables at the base class level, but some pretend like they don't
+// this may be the best way to manage this, but the architecture should be rethought with that in mind since if we're not going to be functional we might as well go all in for object oriented
 class APITokenManager: ObservableObject {
     
-    private var session: URLSession?
-
-    @Published public private(set) var tokenData: TokenData?
-    private var urlData: TokenURLData?
-
-    private var credentials: String?
     
-//    init(basicCredentials:String,session: URLSession,urlData:TokenURLData){
-//        self.credentials = basicCredentials
-//        self.session = session
-//        self.urlData = urlData
-//        self.tokenData = TokenData(statusType:TokenStatusType.unknown)
-//        let _ = generateToken(credentials:basicCredentials,url:urlData.generateURL,session:session)
-//        {
-//            (dataResult) in
-//            self.tokenData = dataResult
-//        }
-//    }
+    @Published public private(set) var tokenData: TokenData = TokenData(statusType: TokenStatusType.waiting)
+
+    private var session: URLSession?
+    public private(set) var urlData: TokenURLData?
+    private var credentials: String?
+    private var timer: Timer?
     
     public func initialize(basicCredentials:String,session: URLSession,urlData:TokenURLData){
         self.credentials = basicCredentials
         self.session = session
         self.urlData = urlData
-        self.tokenData = TokenData(statusType:TokenStatusType.unknown)
-        let _ = generateToken(credentials:basicCredentials,url:urlData.generateURL,session:session)
+        self.tokenData = TokenData(statusType:TokenStatusType.waiting)
+        
+        let _ = retrieveToken(authType:AuthType.basic ,auth:basicCredentials,url:urlData.generateURL,session:session)
         {
             (dataResult) in
-            self.tokenData = dataResult
+            DispatchQueue.main.async{
+                self.tokenData = dataResult
+                if dataResult.statusType == TokenStatusType.valid {
+                    self.scheduleRenewal(tokenData: dataResult, keepAliveURL: urlData.keepAliveURL, session: session)
+                }
+            }
         }
     }
     
-    private func generateToken(credentials:String,url: URL,session: URLSession, dataResult: @escaping (TokenData) -> Void) -> URLSessionDataTask
+    public func EndToken(session:URLSession,invalidateURL:URL){
+        guard let token = self.tokenData.token else{
+            print("no token to invalidate")
+            return
+        }
+        let _ = self.invalidateToken(session: session, token: token, invalidateURL: invalidateURL){
+            (status) in
+            DispatchQueue.main.async{
+                if let myTimer = self.timer{
+                    myTimer.invalidate()
+                }
+                self.tokenData.statusType = status
+            }
+        }
+    }
+    
+    /**
+     Post to an endpoint to get or renew an api token
+     */
+    private func retrieveToken(authType: AuthType, auth:String,url: URL,session: URLSession, dataResult: @escaping (TokenData) -> Void) -> URLSessionDataTask
     {
-        let myRequest = APIAccess.BuildRequest(url:url,basicCredentials:credentials,method:HTTPMethod.post,accept:ContentType.json)
-        
+        var myRequest = APIAccess.BuildRequest(url:url,method:HTTPMethod.post,accept:ContentType.json)
+        myRequest.addValue("\(authType.rawValue) \(auth)", forHTTPHeaderField: "Authorization")
+
         let myTask = APIAccess.RunCall(session:session, request:myRequest) {
             (result) in
             switch result {
@@ -73,18 +86,71 @@ class APITokenManager: ObservableObject {
         return myTask
     }
     
-//    private func keepAliveToken(session: URLSession,token:String,keepAliveURL:URL) -> TokenData
-//    {
-//
-//    }
-    private func invalidateToken(session: URLSession,token:String,invalidateURL:URL)
+    // welcome to callback hell
+    private func scheduleRenewal(tokenData: TokenData,keepAliveURL:URL,session:URLSession)
     {
-        
-    }
-    private func validateToken(session: URLSession, token:String, validateURL:URL){
-        
+        DispatchQueue.global(qos: .background).async{
+            let expSpan = Date().timeIntervalSince(tokenData.expiration ?? Date().addingTimeInterval(-30 * 60))
+            let interval = Double(-expSpan/2)
+            let timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true){
+                timer in
+                print("renewing")
+                
+                guard let auth = tokenData.token else {
+                    print("no authorization, something went wrong")
+                    timer.invalidate()
+                    return
+                }
+                let _ = self.retrieveToken(authType:AuthType.bearer ,auth:auth,url:keepAliveURL,session:session){
+                    (dataResult) in
+                    let myTokenData = dataResult
+                    DispatchQueue.main.async{
+                        self.tokenData = myTokenData
+                        print("renewed token")
+                        if myTokenData.statusType != TokenStatusType.valid{
+                            print("token could not be renewed")
+                            timer.invalidate()
+                        }
+                    }
+                }
+            }
+            let runLoop = RunLoop.current
+            runLoop.add(timer, forMode: RunLoop.Mode.default)
+            runLoop.run()
+            if let myTimer = self.timer{
+                myTimer.invalidate()
+            }
+            self.timer = timer
+        }
     }
     
+    private func invalidateToken(session: URLSession,token:String,invalidateURL:URL, status:  @escaping (TokenStatusType) -> Void) -> URLSessionDataTask
+    {
+        let myRequest = APIAccess.BuildRequest(url:invalidateURL,token:token,method:HTTPMethod.post,accept:ContentType.json)
+        
+        let myTask = APIAccess.RunCall(session:session, request:myRequest) {
+            (result) in
+            switch result {
+            case .success(let response as HTTPURLResponse, _):
+                if response.statusCode >= 200 && response.statusCode <= 299 {
+                    status(TokenStatusType.invalidated)
+                    print("token invalidated")
+                }
+                else {
+                    status(TokenStatusType.unknown)
+                    print("invalidation failed")
+                }
+            case .failure(let error):
+                print(error)
+                status(TokenStatusType.unknown)
+            default:
+                print("neither success nor error reported")
+                status(TokenStatusType.unknown)
+            }
+        }
+        myTask.resume()
+        return myTask
+    }
     
     private func parseAuthJSON(data:Data) -> TokenData
     {

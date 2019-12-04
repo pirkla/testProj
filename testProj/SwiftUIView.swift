@@ -11,27 +11,23 @@ import SwiftUI
 
 struct ContentView: View {
     @ObservedObject var viewDataRouter: ViewDataRouter
-
+    @ObservedObject var apiTokenManager: APITokenManager = APITokenManager()
+    let creds = String("admin:jamf1234").toBase64()
+    let tokenURLData = TokenURLData(generateURL:URL(string:"https://apirkl.jamfcloud.com/uapi/auth/tokens")!,keepAliveURL:URL(string:"https://apirkl.jamfcloud.com/uapi/auth/keepAlive")!,invalidateURL:URL(string:"https://apirkl.jamfcloud.com/uapi/auth/invalidateToken")!,validateURL:URL(string:"https://apirkl.jamfcloud.com/uapi/auth")!)
+    
     var body: some View {
         VStack {
-            // should seperate this logic into its own function
-            if viewDataRouter.loginStatus == LoginStatus.NotLoggedIn
-            {
-                LoginView(viewDataRouter: viewDataRouter)
+            if apiTokenManager.tokenData.statusType == TokenStatusType.waiting{
+                LoginView(viewDataRouter:viewDataRouter, apiTokenManager: apiTokenManager)
             }
-            else if viewDataRouter.loginStatus == LoginStatus.LoggedIn
-            {
-                ReportView(viewDataRouter: viewDataRouter)
-
+            else if apiTokenManager.tokenData.statusType == TokenStatusType.valid{
+                ReportView(viewDataRouter:viewDataRouter, apiTokenManager: apiTokenManager)
             }
-            else if viewDataRouter.loginStatus == LoginStatus.LoggingIn
-            {
-                WaitingView(viewDataRouter: viewDataRouter)
+            else if apiTokenManager.tokenData.statusType == TokenStatusType.invalidated{
+                LoginView(viewDataRouter:viewDataRouter, apiTokenManager: apiTokenManager)
+            }            else {
+                WaitingView(viewDataRouter:viewDataRouter, apiTokenManager: apiTokenManager)
             }
-            else {
-                Text("We shouldn't be here")
-                }
-            TestView()
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

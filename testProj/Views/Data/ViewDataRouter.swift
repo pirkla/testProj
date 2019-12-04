@@ -11,11 +11,11 @@ import SwiftUI
 class ViewDataRouter: ObservableObject, UserData {
     let objectWillChange = PassthroughSubject<ViewDataRouter,Never>()
     
-    var loginStatus: LoginStatus = LoginStatus.NotLoggedIn {
-        didSet {
-            objectWillChange.send(self)
-        }
-    }
+//    var loginStatus: LoginStatus = LoginStatus.NotLoggedIn {
+//        didSet {
+//            objectWillChange.send(self)
+//        }
+//    }
     @Published var BaseURL: String = "https://url" {
         willSet(newValue) { objectWillChange.send(self)
         }

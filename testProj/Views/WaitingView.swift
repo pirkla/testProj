@@ -9,6 +9,7 @@ import SwiftUI
 
 struct WaitingView: View {
     @ObservedObject var viewDataRouter: ViewDataRouter
+    @ObservedObject var apiTokenManager: APITokenManager
 
     var body: some View {
         VStack {
@@ -17,9 +18,8 @@ struct WaitingView: View {
         }
     }
 
-
 struct WaitingView_Preview: PreviewProvider {
     static var previews: some View {
-        WaitingView(viewDataRouter: ViewDataRouter())
+        WaitingView(viewDataRouter: ViewDataRouter(), apiTokenManager: APITokenManager())
     }
 }

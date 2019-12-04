@@ -9,39 +9,30 @@ import SwiftUI
 
 struct LoginView: View {
     @ObservedObject var viewDataRouter: ViewDataRouter
-    
+    @ObservedObject var apiTokenManager: APITokenManager
+    let tokenURLData = TokenURLData(generateURL:URL(string:"https://apirkl.jamfcloud.com/uapi/auth/tokens")!,keepAliveURL:URL(string:"https://apirkl.jamfcloud.com/uapi/auth/keepAlive")!,invalidateURL:URL(string:"https://apirkl.jamfcloud.com/uapi/auth/invalidateToken")!,validateURL:URL(string:"https://apirkl.jamfcloud.com/uapi/auth")!)
+
     var body: some View {
         VStack {
             Text("Login Time!")
             TextField("url", text: $viewDataRouter.BaseURL)
             TextField("Username", text: $viewDataRouter.Username)
             TextField("password", text: $viewDataRouter.Password)
-            //this needs to be fixed up
-            Button(action: {
-                self.viewDataRouter.loginStatus = LoginStatus.LoggingIn
-                print(self.viewDataRouter.loginStatus)
-                // brief delay so we actaully see the loading screen and know something happened
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                    let verification = VerifyLogin.VerifyCredentials(session: SessionHandler.SharedSessionHandler.mySession,url: self.viewDataRouter.BaseURL,username: self.viewDataRouter.Username,password:self.viewDataRouter.Password)
-                    if verification == 0 {
-                        self.viewDataRouter.loginStatus = LoginStatus.LoggedIn
-                    }
-                    else if verification == 1{
-                        self.viewDataRouter.loginStatus = LoginStatus.NotLoggedIn
-                    }
-                    else{
-                        self.viewDataRouter.loginStatus = LoginStatus.NotLoggedIn
-                    }
-                    
-                }
-
-            })
-            {
-                Text("login")
-            }
             Toggle(isOn: $viewDataRouter.AllowUntrusted) {
                 Text("Allow Untrusted")
             }
+            Button(action: {
+                print("Logging In")
+                let creds = String("\(self.viewDataRouter.Username):\(self.viewDataRouter.Password)").toBase64()
+                DispatchQueue.main.async{
+                    let _ = self.apiTokenManager.initialize(basicCredentials: creds, session: SessionHandler.SharedSessionHandler.mySession, urlData: self.tokenURLData)
+                }
+            }) {
+                Text("Log In")
+            }
+            Text("Error Suggestion Placeholder")
+            
+            
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
@@ -49,6 +40,6 @@ struct LoginView: View {
 
 struct LoginView_Preview: PreviewProvider {
     static var previews: some View {
-        LoginView(viewDataRouter: ViewDataRouter())
+        LoginView(viewDataRouter: ViewDataRouter(),apiTokenManager: APITokenManager())
     }
 }

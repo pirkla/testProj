@@ -13,11 +13,4 @@ struct TokenData{
     var statusType: TokenStatusType
 }
 
-public enum TokenStatusType: Int{
-    case valid = 0
-    case sessionError = 1
-    case requestError = 2
-    case parseError = 3
-    case unknown = 4
-    case waiting = 100
-}
+

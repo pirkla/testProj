@@ -96,6 +96,37 @@ public class APIAccess {
         return myTaskArray
     }
 
+
+    
+    /**
+     Get to an endpoint with a bearer token and check response
+     */
+    public static func CheckGetSuccess(session: URLSession, token:String, validateURL:URL, isSuccess:  @escaping (Bool) -> Void) -> URLSessionDataTask
+    {
+        let myRequest = APIAccess.BuildRequest(url:validateURL,token:token,method:HTTPMethod.get,accept:ContentType.json)
+        
+        let myTask = APIAccess.RunCall(session:session, request:myRequest) {
+            (result) in
+            switch result {
+            case .success(let response as HTTPURLResponse, _):
+                if response.statusCode >= 200 && response.statusCode <= 299 {
+                    isSuccess(true)
+                }
+                else {
+                    isSuccess(false)
+                }
+            case .failure(let error):
+                print(error)
+                isSuccess(false)
+            default:
+                print("neither success nor error reported")
+                isSuccess(false)
+            }
+        }
+        myTask.resume()
+        return myTask
+    }
+    
     /**
      A sample group request - poorly implemented and not for use
      */

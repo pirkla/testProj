@@ -11,20 +11,21 @@ import SwiftUI
 
 
 struct TestView: View {
-    @ObservedObject var apiTokenManager: APITokenManager = APITokenManager()
-
-    
-    let creds = String("user:pass").toBase64()
-    let tokenURLData = TokenURLData(generateURL:URL(string:"https://tryitout.jamfcloud.com/uapi/auth/tokens")!,keepAliveURL:URL(string:"https://tryitout.jamfcloud.com/uapi/auth/keepalive")!,invalidateURL:URL(string:"https://tryitout.jamfcloud.com/uapi/auth/invalidate")!,validateURL:URL(string:"https://tryitout.jamfcloud.com/uapi/auth")!)
+    @ObservedObject var viewDataRouter: ViewDataRouter
+    @ObservedObject var apiTokenManager: APITokenManager
+    let creds = String("admin:jamf1234").toBase64()
+    let tokenURLData = TokenURLData(generateURL:URL(string:"https://apirkl.jamfcloud.com/uapi/auth/tokens")!,keepAliveURL:URL(string:"https://apirkl.jamfcloud.com/uapi/auth/keepAlive")!,invalidateURL:URL(string:"https://apirkl.jamfcloud.com/uapi/auth/invalidateToken")!,validateURL:URL(string:"https://apirkl.jamfcloud.com/uapi/auth")!)
 
     
     var body: some View {
         VStack {
             Text("dostuff")
-            Text(String(apiTokenManager.tokenData?.token ?? "No Token Data"))
+            Text(String(apiTokenManager.tokenData.token ?? "No Token Data"))
+            Text(String(apiTokenManager.tokenData.expiration?.toString(dateFormat:"yyyy-MM-dd HH:mm:ss") ?? "No expire Data"))
+
             Button(action: {
                 print("running action")
-                DispatchQueue.global().async{
+                DispatchQueue.main.async{
                     let _ = self.apiTokenManager.initialize(basicCredentials: self.creds, session: SessionHandler.SharedSessionHandler.mySession, urlData: self.tokenURLData)
                 }
             }) {
@@ -37,6 +38,6 @@ struct TestView: View {
 
 struct TestView_Previews: PreviewProvider {
     static var previews: some View {
-        TestView()
+        TestView(viewDataRouter: ViewDataRouter(), apiTokenManager: APITokenManager())
     }
 }
