@@ -13,7 +13,7 @@ import SwiftUI
 struct TestView: View {
     @ObservedObject var viewDataRouter: ViewDataRouter
     @ObservedObject var apiTokenManager: APITokenManager
-    let creds = String("admin:jamf1234").toBase64()
+    let creds = String("admin:pass").toBase64()
     let tokenURLData = TokenURLData(generateURL:URL(string:"https://apirkl.jamfcloud.com/uapi/auth/tokens")!,keepAliveURL:URL(string:"https://apirkl.jamfcloud.com/uapi/auth/keepAlive")!,invalidateURL:URL(string:"https://apirkl.jamfcloud.com/uapi/auth/invalidateToken")!,validateURL:URL(string:"https://apirkl.jamfcloud.com/uapi/auth")!)
 
     
