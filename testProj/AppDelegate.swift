@@ -18,7 +18,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Create the SwiftUI view that provides the window contents.
         print("running")
-        let contentView = ContentView(viewDataRouter: ViewDataRouter())
+        let jamfAPIAccess = JamfAPIAccess()
+        let contentView = ContentView(jamfAPIAccess: jamfAPIAccess,windowStateData: WindowStateData())
 
 
         // Create the window and set the content view. 

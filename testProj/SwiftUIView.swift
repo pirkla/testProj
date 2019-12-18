@@ -8,31 +8,31 @@
 
 import SwiftUI
 
-
 struct ContentView: View {
-    @ObservedObject var viewDataRouter: ViewDataRouter
-    @ObservedObject var apiTokenManager: APITokenManager = APITokenManager()
-    let creds = String("admin:pass").toBase64()
-    let tokenURLData = TokenURLData(generateURL:URL(string:"https://apirkl.jamfcloud.com/uapi/auth/tokens")!,keepAliveURL:URL(string:"https://apirkl.jamfcloud.com/uapi/auth/keepAlive")!,invalidateURL:URL(string:"https://apirkl.jamfcloud.com/uapi/auth/invalidateToken")!,validateURL:URL(string:"https://apirkl.jamfcloud.com/uapi/auth")!)
+    @ObservedObject var jamfAPIAccess: JamfAPIAccess
+//    @ObservedObject var apiTokenManager: APITokenManager
+    @ObservedObject var windowStateData: WindowStateData
     
     var body: some View {
+
         VStack {
-            if apiTokenManager.tokenData.statusType == TokenStatusType.waiting{
-                LoginView(viewDataRouter:viewDataRouter, apiTokenManager: apiTokenManager)
-            }
-            else if apiTokenManager.tokenData.statusType == TokenStatusType.valid{
-                ReportView(viewDataRouter:viewDataRouter, apiTokenManager: apiTokenManager)
-            }
-            else if apiTokenManager.tokenData.statusType == TokenStatusType.invalidated{
-                LoginView(viewDataRouter:viewDataRouter, apiTokenManager: apiTokenManager)
-            }            else {
-                WaitingView(viewDataRouter:viewDataRouter, apiTokenManager: apiTokenManager)
-            }
+            containedView()
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    func containedView() -> AnyView {
+        switch windowStateData.windowState{
+        case .HistoryView:
+            return AnyView(HistoryReportView(computerHistoryCombine: ComputerHistoryCombine(baseURL: jamfAPIAccess.BaseURL, basicCreds: jamfAPIAccess.basicCreds, session:SessionHandler.SharedSessionHandler.mySession), windowStateData: windowStateData))
+        case .Login:
+            return AnyView(LoginView(jamfAPIAccess: jamfAPIAccess,windowStateDate: windowStateData))
+        case .Loading:
+            return AnyView(LoginView(jamfAPIAccess: jamfAPIAccess,windowStateDate: windowStateData))
+        }
     }
 }
 struct ContentView_Preview: PreviewProvider {
     static var previews: some View {
-        ContentView(viewDataRouter: ViewDataRouter())
+        ContentView(jamfAPIAccess: JamfAPIAccess(),windowStateData: WindowStateData())
     }
 }

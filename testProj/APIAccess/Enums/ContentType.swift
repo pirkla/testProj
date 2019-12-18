@@ -6,6 +6,9 @@
 //  Copyright © 2019 PIrklator. All rights reserved.
 //
 
+/**
+ Content type strings for requests
+ */
 public enum ContentType: String{
     case json = "application/json"
     case xml = "text/xml"

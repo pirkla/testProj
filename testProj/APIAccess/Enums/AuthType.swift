@@ -6,6 +6,9 @@
 //  Copyright © 2019 PIrklator. All rights reserved.
 //
 
+/**
+ Authentication types for requests
+ */
 public enum AuthType: String{
     case basic = "Basic"
     case bearer = "Bearer"

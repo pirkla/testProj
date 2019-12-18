@@ -8,7 +8,7 @@
 import Foundation
 
 /**
- Global URLSession Handler
+ Configurable Global URLSession Instance
  */
 public class SessionHandler
 {
@@ -26,12 +26,16 @@ public class SessionHandler
     private init()
     {
         print("initializing session")
+        let config = URLSessionConfiguration.default
+        // currently hardcoded to only allow 1 connection at a time to throttle the request speed.
+        config.httpMaximumConnectionsPerHost = 1
         self.mySession = URLSession(configuration: .default, delegate: myDelegate, delegateQueue: myDelQueue)
     }
     /*
-     Set trust for singleton. This will switch trust for queued tasks.
+     Set trust for URLSession singleton. Note this will switch trust for queued tasks.
      */
     public func setAllowUntrusted(allowUntrusted : Bool){
-        myDelegate.setTrust(_allowUntrusted: allowUntrusted)
+        myDelegate.setTrust(allowUntrusted: allowUntrusted)
+        print(allowUntrusted)
     }
 }

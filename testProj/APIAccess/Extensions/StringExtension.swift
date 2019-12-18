@@ -8,7 +8,7 @@
 import Foundation
 
 /**
- Add conversion to and from base64 to String
+ Convert to and from base64 to String
  */
 extension String {
         func fromBase64() -> String? {
