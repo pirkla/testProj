@@ -7,6 +7,8 @@
 //
 
 import Foundation
+import os.log
+
 public struct TokenData{
     var token: String?
     var expiration: Date?
@@ -27,9 +29,11 @@ extension TokenData {
     init(json: [String: Any]) throws {
         self.statusType = TokenStatusType.unknown
         guard let token = json["token"] as? String else {
+            os_log("TokenData serialization failed. Missing 'token'",log: .serialization, type: .error)
             throw SerializationError.missing("token")
         }
         guard let myExpiration = json["expires"] as? Double else{
+            os_log("TokenData serialization failed. Missing 'expires'",log: .serialization, type: .error)
             throw SerializationError.missing("expires")
         }
         let date = Date(timeIntervalSince1970: myExpiration/1000)
@@ -51,16 +55,18 @@ extension TokenData {
                         completion(.success(parsed))
                     }
                     else {
+                        os_log("apiToken serialization failed",log: .serialization, type: .error)
                         let error = APITokenError(line:55,kind:APITokenError.ErrorKind.emptyData)
                         completion(.failure(error))
                     }
                 }
                 else {
+                    os_log("apiToken serialization failed",log: .serialization, type: .error)
                     let error = APITokenError(line:59,kind:APITokenError.ErrorKind.parsing)
                     completion(.failure(error))
                 }
             case .failure(let error):
-                print(error)
+                os_log("apiToken retrieval failed: %@",log: .network, type: .error,error.localizedDescription)
                 completion(.failure(error))
             }
         }
@@ -75,7 +81,7 @@ extension TokenData {
             case .success(_):
                 isSuccess(true)
             case .failure(let error):
-                print(error)
+                os_log("apiToken invalidation failed: %@",log: .network, type: .error,error.localizedDescription)
                 isSuccess(false)
             }
         }

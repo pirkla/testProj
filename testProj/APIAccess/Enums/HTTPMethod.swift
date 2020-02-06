@@ -11,5 +11,8 @@
  HTTP method options for requests
  */
 public enum HTTPMethod: String {
-  case get, put, post, delete
+    case get = "get"
+    case put = "put"
+    case post = "post"
+    case delete = "delete"
 }

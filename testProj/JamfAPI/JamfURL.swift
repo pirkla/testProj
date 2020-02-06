@@ -7,7 +7,22 @@
 //
 
 import Foundation
+import os.log
+
 class JamfURL {
+    
+    /**
+     Create a url from elements for use with Jamf Pro
+     
+     - returns:
+     A concatenated url
+     
+     - parameters:
+        - baseURL: The base url of the instance. Ex: url.jamfcloud.com
+        - endpoint: The endpoint to be used.
+        - identifierType: The type of identifier to be used.
+        - identifier: The identifier to be used.
+     */
     public func BuildJamfURL(baseURL: String, endpoint: String, identifierType: String?=nil, identifier: String? = nil) -> URL?
     {
         var myURL = baseURL.replacingOccurrences(of: "https:", with: "").replacingOccurrences(of: "http:", with: "").replacingOccurrences(of: "/", with: "")
@@ -31,6 +46,18 @@ class JamfURL {
         return components.url
     }
     
+    /**
+     Create an array of urls from elements for use with Jamf Pro
+     
+     - returns:
+     A concatenated url
+     
+     - parameters:
+        - baseURL: The base url of the instance. Ex: url.jamfcloud.com
+        - endpoint: The endpoint to be used.
+        - identifierType: The type of identifier to be used.
+        - identifier: The array of identifiers to be used
+     */
     public func BuildJamfURLArray(baseURL: String, endpoint: String, identifierType: String, identifierArray: [String]) -> [URL?]
     {
         var myBaseURL = baseURL.replacingOccurrences(of: "https:", with: "").replacingOccurrences(of: "http:", with: "").replacingOccurrences(of: "/", with: "")

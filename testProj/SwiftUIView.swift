@@ -10,7 +10,6 @@ import SwiftUI
 
 struct ContentView: View {
     @ObservedObject var jamfAPIAccess: JamfAPIAccess
-//    @ObservedObject var apiTokenManager: APITokenManager
     @ObservedObject var windowStateData: WindowStateData
     
     var body: some View {
@@ -23,11 +22,14 @@ struct ContentView: View {
     func containedView() -> AnyView {
         switch windowStateData.windowState{
         case .HistoryView:
-            return AnyView(HistoryReportView(computerHistoryCombine: ComputerHistoryCombine(baseURL: jamfAPIAccess.BaseURL, basicCreds: jamfAPIAccess.basicCreds, session:SessionHandler.SharedSessionHandler.mySession), windowStateData: windowStateData))
+            return AnyView(PickerView(windowStateData: windowStateData, jamfAPIAccess: jamfAPIAccess))
         case .Login:
             return AnyView(LoginView(jamfAPIAccess: jamfAPIAccess,windowStateDate: windowStateData))
+//            return AnyView(PrinterView())
         case .Loading:
             return AnyView(LoginView(jamfAPIAccess: jamfAPIAccess,windowStateDate: windowStateData))
+        case .Picker:
+            return AnyView(PickerView(windowStateData: windowStateData, jamfAPIAccess: jamfAPIAccess))
         }
     }
 }

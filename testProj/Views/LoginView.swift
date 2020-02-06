@@ -7,46 +7,50 @@
 //
 
 import SwiftUI
-
+import os.log
 struct LoginView: View {
     
     @ObservedObject var jamfAPIAccess: JamfAPIAccess
-//    @ObservedObject var apiTokenManager: APITokenManager
     @ObservedObject var windowStateDate: WindowStateData
-        
-//    @State var allowUntrusted: Bool = false{
-//        didSet(newValue) { SessionHandler.SharedSessionHandler.setAllowUntrusted(allowUntrusted: newValue)
-//            print("trust set")
-//        }
-//    }
+    @State var errorMessage: String = ""
+
+    @State var animate = true
     
     var body: some View {
         VStack {
-            Text("MRT")
-            TextField("url", text: $jamfAPIAccess.BaseURL)
-            TextField("Username", text: $jamfAPIAccess.Username)
-            TextField("password", text: $jamfAPIAccess.Password)
+            Text("dINg DoNg")
+            TextField("URL", text: $jamfAPIAccess.BaseURL).frame(width: 300, alignment: .center)
+            TextField("Username", text: $jamfAPIAccess.Username).frame(width: 300, alignment: .center)
+            SecureField("password", text: $jamfAPIAccess.Password).frame(width: 300, alignment: .center)
             Toggle(isOn: $jamfAPIAccess.allowUntrusted) {
                 Text("Allow Untrusted")
             }
             Button(action: {
+                self.errorMessage = "loading"
+//                self.jamfAPIAccess.CheckStartupStatus(){
+//                    _ in
+//                }
+//                self.jamfAPIAccess.SetDBConnection(){
+//                    _ in
+//                }
                 self.jamfAPIAccess.Login(){
                     result in
                     switch result{
                     case .success(_):
-                        print("logging in")
-                        self.windowStateDate.windowState = WindowStateData.WindowState.HistoryView
+                        os_log("Login Finished", log: .ui, type: .info)
+
+                        self.windowStateDate.windowState = WindowStateData.WindowState.Picker
                     case .failure(let error):
-                        print(error)
+                        os_log("Login failed: %@", log: .ui, type: .error,error.localizedDescription)
+                        self.errorMessage = error.localizedDescription
                     }
                 }
             }) {
                 Text("Log In")
             }
-            Text("Error placeholder")
-
-            
+            Text(errorMessage)
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
+        
     }
 }
 

@@ -7,14 +7,14 @@
 //
 
 import Foundation
-import Combine
-
+import os.log
 // This could be cleaned up further by extending the TokenData struct
-// renewal/invalidation not fully implemented
 // needs more verbose error output as this is a major failure point
 // this class shouldn't be relied on to provide interface data, but currently is implemented like it does
+// this class sucks
+// you dummy you made the renewal always use the first token - fixed - so dirty
 
-class APITokenManager: ObservableObject, TokenProvider {
+class APITokenManager: TokenProvider {
     public private(set) var tokenData: TokenData = TokenData(statusType: TokenStatusType.waiting)
 
     // timer to schedule renewal of API token
@@ -25,6 +25,8 @@ class APITokenManager: ObservableObject, TokenProvider {
      Retrieve the api token, and schedule renewal
      */
     public func Initialize(basicCredentials:String,session: URLSession,generateURL: URL, keepAliveURL: URL, completion: @escaping (Result<TokenData, Error>) -> Void){
+        os_log("initialized",log: .tokenManager, type: .debug)
+
         self.tokenData = TokenData(statusType:TokenStatusType.waiting)
         let myRequest = URLRequest(url: generateURL, basicCredentials: basicCredentials, method: HTTPMethod.post)
         let _ = TokenData.RetrieveToken(request: myRequest, session: session)
@@ -34,14 +36,17 @@ class APITokenManager: ObservableObject, TokenProvider {
             case .success(let tokenData):
                 self.tokenData = tokenData
                 if tokenData.statusType == TokenStatusType.valid {
-                    self.scheduleRenewal(tokenData: tokenData, keepAliveURL: keepAliveURL, session: session)
+                    os_log("api token created",log: .tokenManager, type: .info)
+                    self.scheduleRenewal(keepAliveURL: keepAliveURL, session: session)
                     completion(.success(tokenData))
                 }
                 else {
-                    let error = NSError(domain: "TokenRetrieval", code: 100)
+                    os_log("api token could not be created",log: .tokenManager, type: .error)
+                    let error = NSError(domain: "TokenRetrieval", code: 0)
                     completion(.failure(error))
                 }
             case .failure(let error):
+                os_log("api token could not be created: %@",log: .tokenManager, type: .error, error.localizedDescription)
                 completion(.failure(error))
             }
         }
@@ -51,8 +56,9 @@ class APITokenManager: ObservableObject, TokenProvider {
      Invalidate the api token
      */
     public func EndToken(session:URLSession,invalidateURL:URL){
+        os_log("invalidating token",log: .tokenManager, type: .info)
         guard let token = self.tokenData.token else {
-            print("no token to invalidate")
+            os_log("no token to invalidate",log: .tokenManager, type: .info)
             return
         }
         let myRequest = URLRequest(url:invalidateURL,token:token,method:HTTPMethod.post,accept:ContentType.json)
@@ -61,13 +67,12 @@ class APITokenManager: ObservableObject, TokenProvider {
             isSuccess in
             self.renewalTimer.invalidate()
             if !isSuccess{
-                print("Could not invalidate token")
+                os_log("Could not invalidate token",log: .tokenManager, type: .error)
                 self.tokenData.statusType = TokenStatusType.unknown
                 return
             }
-            DispatchQueue.main.async{
-                self.tokenData.statusType = TokenStatusType.invalidated
-            }
+            os_log("token invalidated",log: .tokenManager, type: .info)
+            self.tokenData.statusType = TokenStatusType.invalidated
         }
     }
     
@@ -76,7 +81,7 @@ class APITokenManager: ObservableObject, TokenProvider {
      */
     public func ForceRenewToken(keepAliveURL:URL,session:URLSession){
         guard let auth = self.tokenData.token else {
-            print("no authorization, something went wrong")
+            os_log("no token present, something went wrong",log: .tokenManager, type: .error)
             return
         }
         let myRequest = URLRequest(url: keepAliveURL, token: auth, method: HTTPMethod.post)
@@ -85,26 +90,26 @@ class APITokenManager: ObservableObject, TokenProvider {
             (result) in
             switch result {
             case .success(let tokenData):
+                os_log("token renewed",log: .tokenManager, type: .info)
                 self.tokenData = tokenData
-                print("token renewed")
             case .failure(let error):
-                print(error)
+                os_log("token could not be renewed: %@",log: .tokenManager, type: .error, error.localizedDescription)
             }
         }
     }
     
     // welcome to callback hell
-    private func scheduleRenewal(tokenData: TokenData,keepAliveURL:URL,session:URLSession)
+    private func scheduleRenewal(keepAliveURL:URL,session:URLSession)
     {
         DispatchQueue.global(qos: .background).async{
-            let expSpan = Date().timeIntervalSince(tokenData.expiration ?? Date().addingTimeInterval(-30 * 60))
+            let expSpan = Date().timeIntervalSince(self.tokenData.expiration ?? Date().addingTimeInterval(-30 * 60))
             let interval = Double(-expSpan/2)
             let timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true){
                 timer in
-                print("renewing")
-                
-                guard let auth = tokenData.token else {
-                    print("no authorization, something went wrong")
+                os_log("scheduled token renewal started",log: .tokenManager, type: .info)
+
+                guard let auth = self.tokenData.token else {
+                    os_log("no token present, something went wrong",log: .tokenManager, type: .error)
                     timer.invalidate()
                     return
                 }
@@ -115,13 +120,13 @@ class APITokenManager: ObservableObject, TokenProvider {
                     switch result {
                     case .success(let tokenData):
                         self.tokenData = tokenData
-                        print("renewed token")
+                        os_log("token renewed",log: .tokenManager, type: .info)
                         if tokenData.statusType != TokenStatusType.valid{
-                            print("token could not be renewed")
+                            os_log("token could not be renewed, an unknown error occurred",log: .tokenManager, type: .error)
                             timer.invalidate()
                         }
                     case .failure(let error):
-                        print(error)
+                        os_log("token could not be renewed: %@",log: .tokenManager, type: .error, error.localizedDescription)
                     }
                 }
                 

@@ -14,7 +14,7 @@ struct DirPickerView<T>: View where T: DirPickerData {
     var body: some View {
         VStack {
             if dirPickerData.WorkingDir != nil {
-                Text("Working Directory: \(dirPickerData.WorkingDir!.path)")
+                Text("Current Directory: \(dirPickerData.WorkingDir!.path)")
             } else {
                 Text("No selection")
             }
@@ -31,14 +31,20 @@ struct DirPickerView<T>: View where T: DirPickerData {
                     }
                 }
             }) {
-                Text("Select file")
+                Text("Select Directory")
             }
         }
-        .frame(width: 640, height: 120)    }
+        .frame(width: 640, height: 120)
+        
+    }
 }
 
-//struct DirPickerView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        DirPickerView(dirPickerData: DirPickerData())
-//    }
-//}
+struct DirPickerView_Previews: PreviewProvider {
+    static var previews: some View {
+        DirPickerView(dirPickerData: DirPickerDataTest())
+    }
+}
+
+class DirPickerDataTest: DirPickerData{
+    var WorkingDir: URL?
+}

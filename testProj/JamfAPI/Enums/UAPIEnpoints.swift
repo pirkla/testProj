@@ -7,11 +7,13 @@
 //
 
 import Foundation
-// should really have used url components for this
 
 public enum UAPIEndpoints {
     static let authKeepAlive = "/uapi/auth/keepAlive"
     static let authInvalidate = "/uapi/auth/invalidateToken"
     static let authToken = "/uapi/auth/tokens"
     static let authCurrent = "/uapi/auth/current"
+    
+    static let startupStatus = "/uapi/startup-status"
+    static let initDBConnection = "/uapi/system/initialize-database-connection"
 }

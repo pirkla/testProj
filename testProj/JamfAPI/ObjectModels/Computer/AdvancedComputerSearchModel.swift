@@ -7,7 +7,7 @@
 //
 
 import Foundation
-
+import os.log
 
 
 struct AdvancedComputerSearch {
@@ -53,19 +53,29 @@ extension AdvancedComputerSearch {
                     let parsed = try? AdvancedComputerSearch.init(json: dictionary)
                     if let parsed = parsed {
                         completion(parsed)
-                        print("Advanced Search Found")
+                        os_log("Search result found",log: .jamfAPI, type: .info)
                     }
                     else {
                         completion(nil)
-                        print("Advanced Search failed")
+                        os_log("No search result found",log: .jamfAPI, type: .info)
                     }
                 }
                 else {
                     completion(nil)
-                    print("Advanced Search failed")
+                    os_log("No search result found",log: .jamfAPI, type: .info)
                 }
             case .failure(let error):
-                print(error)
+                guard let myError = error as? URLSession.DataTaskError else {
+                    os_log("Error returned: %@",log: .jamfAPI, type: .error,error.localizedDescription)
+                    completion(nil)
+                    return
+                }
+                if myError.statusCode == 404{
+                    os_log("No result found",log: .jamfAPI, type: .info)
+                    completion(nil)
+                    return
+                }
+                os_log("Error returned: %@",log: .jamfAPI, type: .error,error.localizedDescription)
                 completion(nil)
             }
         }

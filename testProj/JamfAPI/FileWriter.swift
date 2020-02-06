@@ -9,16 +9,40 @@
 import Foundation
 class FileWriter {
     
-    func WriteString(myString: String, saveDirectory: URL, fileName: String, fileType: String){
+    /**
+     Write a string to a file
+     
+     - throws:
+     An error of type NSError
+     
+     - parameters:
+         - myString: The string to save
+         - saveDirectory: Directory of the file to save
+         - fileName: Name of the file to save
+         - fileType: Extension of the file to save
+     */
+    func WriteString(myString: String, saveDirectory: URL, fileName: String, fileType: String) throws{
         let catURL = saveDirectory.appendingPathComponent(fileName+fileType)
-        _ = try? myString.write(to: catURL, atomically: true, encoding: String.Encoding.utf8)
+        try myString.write(to: catURL, atomically: true, encoding: String.Encoding.utf8)
     }
-    func WriteStringDated(myString: String, saveDirectory: URL, fileName: String,fileType: String){
+    
+    /**
+     Write a string to a file with a date appended to the file name
+     
+     - throws:
+     An error of type NSError
+     
+     - parameters:
+         - myString: The string to save
+         - saveDirectory: Directory of the file to save
+         - fileName: Name of the file to save
+         - fileType: Extension of the file to save
+     */
+    func WriteStringDated(myString: String, saveDirectory: URL, fileName: String,fileType: String) throws {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd hh:mm:ss"
         let date = formatter.string(from: Date())
         let catURL = saveDirectory.appendingPathComponent(fileName+"-"+date+fileType)
-        print(catURL)
-        _ = try? myString.write(to: catURL, atomically: true, encoding: String.Encoding.utf8)
+        try myString.write(to: catURL, atomically: true, encoding: String.Encoding.utf8)
     }
 }

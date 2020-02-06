@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct EventLog{
+struct EventLog: Codable{
     var event: String
     var username: String
     var time: Date
@@ -32,7 +32,7 @@ extension EventLog {
     }
 }
 
-struct PolicyLogs{
+struct PolicyLogs: Codable{
     var id: Int
     var name: String
     var username: String
@@ -69,7 +69,7 @@ extension PolicyLogs {
 }
 
 
-struct GenericLog{
+struct GenericLog: Codable{
     var time: Date
     var status: String
 }
@@ -89,7 +89,7 @@ extension GenericLog{
 }
 
 
-struct CompletedCommand{
+struct CompletedCommand: Codable{
     var name: String
     var time: Date
     var username: String
@@ -116,7 +116,7 @@ extension CompletedCommand{
 
 
 
-struct FailedCommand{
+struct FailedCommand: Codable{
     var name: String
     var status: String
     var issuedTime: Date
@@ -147,7 +147,7 @@ extension FailedCommand{
     }
 }
 
-struct PendingCommand{
+struct PendingCommand: Codable{
     var name: String
     var status: String
     var issuedTime: Date
@@ -184,7 +184,7 @@ extension PendingCommand{
     }
 }
 
-struct UserLocation{
+struct UserLocation: Codable{
     var time: Date
     var username: String
     var fullName: String
@@ -241,7 +241,7 @@ extension UserLocation{
 
 
 
-struct InstalledAppStore{
+struct InstalledAppStore: Codable{
     var name: String
     var version: String
     var size: Double
@@ -264,7 +264,7 @@ extension InstalledAppStore{
 }
 
 
-struct PendingAppStore{
+struct PendingAppStore: Codable{
     var name: String
     var version: String
     var deployedTime: Date
@@ -297,7 +297,7 @@ extension PendingAppStore{
 
 
 
-struct FailedAppStore{
+struct FailedAppStore: Codable{
     var name: String
     var version: String
     var status: String
@@ -333,7 +333,7 @@ extension FailedAppStore{
     }
 }
 
-struct Commands{
+struct Commands: Codable{
     var completedCommands: [CompletedCommand]
     var pendingCommands: [PendingCommand]
     var failedCommands: [FailedCommand]
@@ -381,7 +381,7 @@ extension Commands{
 }
 
 
-struct MacAppStoreApps{
+struct MacAppStoreApps: Codable{
     var installedAppStore: [InstalledAppStore]
     var pendingAppStore: [PendingAppStore]
     var failedAppStore: [FailedAppStore]

@@ -19,8 +19,8 @@ struct ComputerHistoryRow: View {
     }
 }
 
-//struct ComputerHistoryRow_Previews: PreviewProvider {
-//    static var previews: some View {
-////        ComputerHistoryRow(computerHistory: ComputerHistory())
-//    }
-//}
+struct ComputerHistoryRow_Previews: PreviewProvider {
+    static var previews: some View {
+        ComputerHistoryRow(computerHistory: ComputerHistory(id: 0, name: "someName", udid: "some udid", serialNumber: "some serial", computerUsageLogs: [], audits: [], policyLogs: [], casperRemoteLogs: [], screenSharingLogs: [], casperImagingLogs: [], commands: Commands(completedCommands: [], pendingCommands: [], failedCommands: []), userLocations: [], macAppStoreApps: MacAppStoreApps(installedAppStore: [], pendingAppStore: [], failedAppStore: [])))
+    }
+}

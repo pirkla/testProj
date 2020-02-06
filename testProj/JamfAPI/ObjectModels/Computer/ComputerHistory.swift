@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import os.log
 struct ComputerHistory {
     var id: Int
     var name: String
@@ -23,6 +24,7 @@ struct ComputerHistory {
     var macAppStoreApps: MacAppStoreApps
     
 }
+
 extension ComputerHistory{
     
     private func eventLogCSV(compHistory: ComputerHistory, logs: [EventLog]) -> String{
@@ -139,9 +141,7 @@ extension ComputerHistory{
     
     
     
-    
     init(json: [String: Any]) throws {
-        print("starting")
         guard let historyDict = json["computer_history"] as? [String:Any] else {
             throw SerializationError.missing("computer_history")
         }
@@ -288,19 +288,18 @@ extension ComputerHistory{
                     let parsed = try? ComputerHistory.init(json: dictionary)
                     if let parsed = parsed {
                         completion(parsed)
-                        print("collected history")
                     }
                     else {
                         completion(nil)
-                        print("history collection failed")
+                        os_log("history collection failed",log: .jamfAPI, type: .error)
                     }
                 }
                 else {
                     completion(nil)
-                    print("history collection failed")
+                    os_log("history collection failed",log: .jamfAPI, type: .error)
                 }
             case .failure(let error):
-                print(error)
+                os_log("history collection failed: %@",log: .jamfAPI, type: .error,error.localizedDescription)
                 completion(nil)
             }
         }
@@ -319,17 +318,16 @@ extension ComputerHistory{
                         let parsed = try? ComputerHistory.init(json: dictionary)
                         if let parsed = parsed {
                             historyArray.append(parsed)
-                            print("collected history")
                         }
                         else {
-                            print("history collection failed")
+                            os_log("history collection failed",log: .jamfAPI, type: .error)
                         }
                     }
                     else {
-                        print("history collection failed")
+                        os_log("history collection failed",log: .jamfAPI, type: .error)
                     }
                 case .failure(let error):
-                    print(error)
+                    os_log("history collection failed: %@",log: .jamfAPI, type: .error,error.localizedDescription)
                 }
             }
             completion(historyArray)

@@ -29,6 +29,7 @@ class WindowStateData: ObservableObject {
     
     enum WindowState{
         case Login
+        case Picker
         case HistoryView
         case Loading
     }
